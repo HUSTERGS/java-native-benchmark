@@ -1,69 +1,56 @@
 package com.zakgof.jnbenchmark.foreign;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.VarHandle;
 
-import static java.lang.foreign.MemoryLayout.structLayout;
+import static com.zakgof.jnbenchmark.Common.CLOCK_MONOTONIC;
 import static java.lang.foreign.ValueLayout.ADDRESS;
-import static java.lang.foreign.ValueLayout.JAVA_SHORT;
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
 public class JdkForeignBenchmark {
+    private static final MethodHandle mhClockGetTime;
+    private static final MemorySegment preallocateSegment = Arena.ofAuto().allocate(JAVA_LONG.byteSize() * 2);
 
-    private static final MemoryLayout SYSTEMTIME = structLayout(
-            JAVA_SHORT.withName("wYear"),
-            JAVA_SHORT.withName("wMonth"),
-            JAVA_SHORT.withName("wDayOfWeek"),
-            JAVA_SHORT.withName("wDay"),
-            JAVA_SHORT.withName("wHour"),
-            JAVA_SHORT.withName("wMinute"),
-            JAVA_SHORT.withName("wSecond"),
-            JAVA_SHORT.withName("wMilliseconds")
-    );
-
-    private final VarHandle wSecondHandle;
-    private final MethodHandle mhGetSystemTime;
-    private final MemorySegment globalSystemTime;
-    private final MemorySession globalMemorySession;
-
-
-    public JdkForeignBenchmark() {
-
-        System.loadLibrary("Kernel32");
-        SymbolLookup lookup = SymbolLookup.loaderLookup();
-        Linker linker = Linker.nativeLinker();
-        MemorySegment getSystemTime = lookup.lookup("GetSystemTime").orElseThrow();
-
-        this.wSecondHandle = SYSTEMTIME.varHandle(MemoryLayout.PathElement.groupElement("wSecond"));
-
-
-        this.mhGetSystemTime = linker.downcallHandle(getSystemTime, FunctionDescriptor.ofVoid(ADDRESS));
-
-        globalMemorySession = MemorySession.global();
-        globalSystemTime = globalMemorySession.allocate(SYSTEMTIME);
+    static {
+        final Linker linker = Linker.nativeLinker();
+        final SymbolLookup lookup = linker.defaultLookup();
+        final MemorySegment clockGettime = lookup.find("clock_gettime").orElseThrow();
+        mhClockGetTime = linker.downcallHandle(
+                clockGettime,
+                FunctionDescriptor.of(
+                        JAVA_INT,
+                        JAVA_INT,
+                        ADDRESS
+                )
+        );
     }
 
-    public short all() {
-        try {
-            MemorySegment lpSystemTime = globalMemorySession.allocate(SYSTEMTIME);
-            mhGetSystemTime.invoke(lpSystemTime);
-            return (Short) wSecondHandle.get(lpSystemTime);
+    public static long all() {
+        try (final Arena arena = Arena.ofConfined()) {
+            // TODO: try struct layout
+            final MemorySegment timeSpec = arena.allocate(JAVA_LONG.byteSize() * 2);
+            int result = (int) mhClockGetTime.invokeExact(CLOCK_MONOTONIC, timeSpec);
+            if (result != 0) {
+                throw new RuntimeException("clock_gettime failed for ret value check");
+            }
+            long tv_sec = timeSpec.get(JAVA_LONG, 0);
+            long tv_nsec = timeSpec.get(JAVA_LONG, JAVA_LONG.byteSize());
+            return tv_sec * 1_000_000_000L + tv_nsec;
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void callOnly() {
+    public static void callOnly() {
         try {
-            mhGetSystemTime.invoke(globalSystemTime);
+            int ret = (int) mhClockGetTime.invokeExact(CLOCK_MONOTONIC, preallocateSegment);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
-
 }

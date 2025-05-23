@@ -18,4 +18,8 @@ public class JustJava {
 	public static int java_date() {
 		return new Date().getSeconds();
 	}
+
+	public static long java_nano_time() {
+		return System.nanoTime();
+	}
 }

@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id "me.champeau.jmh" version "0.7.1"
+    id "me.champeau.jmh" version "0.7.3"
 }
 
 compileJava.options.encoding = 'UTF-8'
@@ -10,28 +10,32 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.bytedeco.javacpp-presets:systems-platform:1.4.4'
-    implementation 'net.java.dev.jna:jna-platform:5.13.0'
-    implementation 'com.github.jnr:jnr-ffi:2.2.14'
-    implementation 'com.nativelibs4java:bridj:0.7.0'
+    implementation 'org.bytedeco:javacpp:1.5.11'
+    runtimeOnly 'org.bytedeco:javacpp-platform:1.5.11'
+
+    implementation 'net.java.dev.jna:jna-platform:5.17.0'
+    implementation 'com.github.jnr:jnr-ffi:2.2.17'
 }
 
 jmh {
-    jvmArgs = ['-Djmh.separateClasspathJAR=true', '--enable-preview', '--enable-native-access=ALL-UNNAMED']
+    fork = 0
+    threads = 1
+    jvmArgs = ['-Djmh.separateClasspathJAR=true', '--enable-preview', '--enable-native-access=ALL-UNNAMED' ]
+    version = '1.37'
 }
 
 // Configure Java compilation tasks to enable feature previews
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add("--enable-preview")
     javaCompiler.set(javaToolchains.compilerFor {
-        languageVersion.set(JavaLanguageVersion.of(19))
+        languageVersion.set(JavaLanguageVersion.of(24))
     })
 }
 
 // Then configure the JMH Tasks to build with Java 15
 tasks.withType(me.champeau.jmh.WithJavaToolchain).configureEach {
     javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(19))
+        languageVersion.set(JavaLanguageVersion.of(24))
     })
 }
 
