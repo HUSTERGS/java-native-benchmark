@@ -2,7 +2,7 @@
 JMH performance benchmark for Java's native call APIs: [JNI](https://docs.oracle.com/en/java/javase/12/docs/specs/jni/index.html) (via [JavaCpp](https://github.com/bytedeco/javacpp) ), [JNA](https://github.com/java-native-access/jna), [JNR](https://github.com/jnr/jnr-ffi), [Bridj](https://github.com/nativelibs4java/BridJ) and [JDK JEP-424](https://openjdk.org/jeps/424) Foreign Function/Memory APIs (Preview).
 
 ## Updated May 23, 2025
-The original [repo](https://github.com/zakgof/java-native-benchmark) (which this repo fork from) haven't updated for a while, and it was base on window api. So basically
+The original [repo](https://github.com/zakgof/java-native-benchmark) (which this repo fork from) haven't updated for a while, and it was base on WIN api. So basically
 this repo replace former Windows `GetSystemTime` api to Linux `clock_gettime` api, and compare the result with Java `System.nanoTime` as baseline and use the latest environment including 
 JDK and related dependencies
 ## Benchmark operation ##
@@ -44,11 +44,11 @@ gradlew clean jmh
 Full benchmark (average time, smaller is better)
 
 Benchmark                   Mode  Cnt     Score       Error  Units
-JmhNanoTime.java_nano_time  avgt   10    23.649 ±     0.151  ns/op
-JmhNanoTime.foreign         avgt   10    98.892 ±    32.292  ns/op
-JmhNanoTime.jnr             avgt   10   185.246 ±    34.042  ns/op
-JmhNanoTime.jna             avgt   10  2167.672 ±  1376.484  ns/op
-JmhNanoTime.jni_javacpp     avgt   10  4926.206 ± 11352.754  ns/op
+JmhNanoTime.java_nano_time  avgt   10    23.901 ±    0.712  ns/op
+JmhNanoTime.foreign         avgt   10    89.889 ±   22.616  ns/op
+JmhNanoTime.jnr             avgt   10   175.280 ±   13.408  ns/op
+JmhNanoTime.jna             avgt   10  1863.170 ±  748.999  ns/op
+JmhNanoTime.jni_javacpp     avgt   10  2518.167 ± 3465.217  ns/op
 ```
 
 Now let's look into performance of the native call only, stripping out the struct allocation and field access:
@@ -57,11 +57,11 @@ Now let's look into performance of the native call only, stripping out the struc
 Native call only (average time, smaller is better)
 
 Benchmark                   Mode  Cnt     Score       Error  Units
-JmhCallOnly.java_nano_time  avgt   10    23.789 ±     0.997  ns/op
-JmhCallOnly.foreign         avgt   10    31.533 ±     1.878  ns/op
-JmhCallOnly.jnr             avgt   10   110.965 ±     0.656  ns/op
-JmhCallOnly.jna             avgt   10   664.699 ±    29.632  ns/op
-JmhCallOnly.jni_javacpp     avgt   10  2026.679 ±  2297.273  ns/op
+JmhCallOnly.java_nano_time  avgt   10    23.520 ±    0.091  ns/op
+JmhCallOnly.foreign         avgt   10    32.043 ±    3.969  ns/op
+JmhCallOnly.jnr             avgt   10   115.329 ±    2.699  ns/op
+JmhCallOnly.jna             avgt   10   659.089 ±   22.996  ns/op
+JmhCallOnly.jni_javacpp     avgt   10  1642.190 ± 1698.954  ns/op
 ````
 The order is nearly the same, and Panama is a leader.
 

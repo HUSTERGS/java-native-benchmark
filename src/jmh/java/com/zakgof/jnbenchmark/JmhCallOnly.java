@@ -7,6 +7,7 @@ import com.zakgof.jnbenchmark.jni.JavaCppStock;
 import com.zakgof.jnbenchmark.jnr.JnrBenchmark;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(Scope.Thread)
+@Fork(value = 4)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class JmhCallOnly {
 	@Benchmark
